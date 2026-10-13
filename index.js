@@ -15,7 +15,7 @@ import { readFileSync, existsSync, appendFileSync, statSync, writeFileSync, mkdi
 import { opendir, stat, readFile, writeFile, cp } from "node:fs/promises";
 import { join, basename, dirname, sep } from "node:path";
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
+// 2026-10-14：fileURLToPath 随「自动续对话看门狗」一并移除，不再需要 node:url。
 import { homedir } from "node:os";
 import vm from "node:vm";
 import WebSocket from "ws";
@@ -3072,37 +3072,11 @@ export function apply(ctx) {
     } catch { /* noop */ }
   }
   maybeSpawnNativeFloat();
-  // 自动续对话看门狗:独立进程,检测中断后自动继续对话
-  (async () => {
-    try {
-      // 总开关关闭时不再拉起看门狗(避免「服务恢复」又自动续话)
-      if (autoContinueOff()) {
-        ctx.logger?.info?.(`${name}: 自动续话已关闭,不启动续话看门狗`);
-        return;
-      }
-      // 已有存活 watchdog 实例则不再 spawn(避免 apply 重复执行时堆积)
-      const lockFile = join(process.env.APPDATA || "", "Deepseek Harness EAC", "logs", "eac-watchdog.lock");
-      if (existsSync(lockFile)) {
-        try {
-          const old = Number(readFileSync(lockFile, "utf8").trim());
-          if (old && old !== process.pid) {
-            let alive = true;
-            try { process.kill(old, 0); } catch (e) { alive = false; }
-            if (alive) return; // 已有实例在运行
-          }
-        } catch { /* 锁文件损坏,继续 spawn */ }
-      }
-      const { spawn } = await import("node:child_process");
-      // 看门狗端口动态获取(--port 进程参数),端口漂移后仍能正确探测/续对话
-      const wd = spawn(process.execPath, [fileURLToPath(new URL("./continue-watchdog.cjs", import.meta.url)), serverPortArg()], {
-        detached: true,
-        stdio: "ignore",
-      });
-      wd.unref();
-    } catch (e) {
-      ctx.logger?.warn?.(`${name}: 看门狗启动失败: ${String((e && e.message) || e)}`);
-    }
-  })();
+  // 2026-10-14：原「自动续对话看门狗」已按用户要求移除。
+  // 它原先会 spawn 一个独立进程 continue-watchdog.cjs，每 4 秒 ping
+  // /api/eac-monitor/ping 检查服务存活，发现「不可达 → 恢复」就自动发续对话指令。
+  // 现在插件不再做任何后台服务存活检查，也不再自动续对话；
+  // /api/eac-monitor/continue 端点保留（被动，可手动调用）。
   // 设置命名空间暴露(Web 设置页可编辑)
   ensureSettingsNamespaceExposed("eac-monitor", ctx.logger);
   // 设置热更新(settings.yaml 变化 → cfg 刷新)
