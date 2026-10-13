@@ -1,0 +1,47 @@
+# 依赖与产物
+node_modules/
+dist/
+build/
+out/
+__pycache__/
+*.tsbuildinfo
+
+# 运行时状态与日志
+logs/
+*.log
+*.pid
+*.lock
+*-state.json
+run-state.json
+history.jsonl
+
+# 凭据与私钥（绝不提交）
+.credentials.yaml
+credentials.json
+*.secret
+*.secrets
+guard.json
+token.txt
+*.keystore
+*.jks
+*.pem
+*.key
+.env
+.env.*
+
+# 大文件与媒体
+*.mp3
+*.wav
+*.mp4
+*.webm
+*.apk
+*.exe
+*.dll
+*.zip
+*.7z
+*.db
+
+# 系统
+Thumbs.db
+desktop.ini
+.DS_Store
